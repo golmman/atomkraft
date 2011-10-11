@@ -12,6 +12,10 @@
 #include "move.h"
 #include <queue>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+
 using namespace std;
 
 
@@ -189,10 +193,16 @@ extern bool sendlinesFics_kill;
 
 void connectFics();
 void disconnectFics();
-void* recvFics(void* arg);
+
 void sendFics(char* str);
 
-void* sendlinesFics(void* str);
+#if defined(_MSC_VER)
+	DWORD WINAPI recvFics(LPVOID arg);
+	DWORD WINAPI sendlinesFics(LPVOID str);
+#else
+	void* recvFics(void* arg);
+	void* sendlinesFics(void* str);
+#endif
 
 void* userInput(void* arg);
 

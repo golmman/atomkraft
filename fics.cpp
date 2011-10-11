@@ -27,13 +27,16 @@
 #include <iostream>
 #include <ctype.h>
 
+#undef WIN32_LEAN_AND_MEAN
+
 using std::cout;
 using std::cin;
 using std::endl;
 
-void WSAAPI freeaddrinfo (struct addrinfo*);
-int WSAAPI getaddrinfo (const char*,const char*,const struct addrinfo*, struct addrinfo**);
-
+#if defined (__GNUC__)
+	void WSAAPI freeaddrinfo (struct addrinfo*);
+	int WSAAPI getaddrinfo (const char*,const char*,const struct addrinfo*, struct addrinfo**);
+#endif
 
 // global
 queue<Style12*> cmd_queue;
@@ -182,8 +185,14 @@ void connectFics() {
 	 * sending and receiving
 	 */
 	
+#if defined(_MSC_VER)
+	CreateThread(NULL, 0, recvFics, 0, 0, NULL);
+#else
 	pthread_t recv_thread;
-	pthread_create(&recv_thread, NULL, recvFics, NULL);
+	pthread_create(&recv_thread, 0, recvFics, 0);
+#endif
+
+	
 	
 	//pthread_t user_thread;
 	//pthread_create(&user_thread, NULL, userInput, NULL);
@@ -248,8 +257,12 @@ void disconnectFics() {
 	WSACleanup();
 }
 
-
-void* recvFics(void* arg) {
+#if defined(_MSC_VER)
+	DWORD WINAPI recvFics(LPVOID arg)
+#else
+	void* recvFics(void* arg)
+#endif
+	{
 	int iResult;
 	
 	char recvbuf[2048];
@@ -356,8 +369,14 @@ void parseFics(char* str) {
 //		strcat(s, "help mule \n");
 		strcat(s, "tell golmman Moin Moin!\n");
 
+#if defined(_MSC_VER)
+		CreateThread(NULL, 0, sendlinesFics, (LPVOID)s, 0, NULL);
+#else
 		pthread_t sendall;
 		pthread_create(&sendall, 0, sendlinesFics, (void*)s);
+#endif
+
+		
 	}
 	
 	// fill the buffer
@@ -389,8 +408,12 @@ void parseFics(char* str) {
 			strcat(s, "tell golmman Moin Moin!\n");
 			
 			
+#if defined(_MSC_VER)
+			CreateThread(NULL, 0, sendlinesFics, (LPVOID)s, 0, NULL);
+#else
 			pthread_t sendall;
 			pthread_create(&sendall, 0, sendlinesFics, (void*)s);
+#endif
 
 
 //		} else if (strstr(waitbuf, "<12> rnbqkbnr pppppppp -------- -------- -------- -------- PPPPPPPP RNBQKBNR")) {
@@ -852,8 +875,13 @@ void sendFics(char *str) {
 } 
 
 
+#if defined(_MSC_VER)
+	DWORD WINAPI sendlinesFics(LPVOID str)
+#else
+	void* sendlinesFics(void* str)
+#endif
 
-void* sendlinesFics(void* str) {
+	{
 	
 	char* start = (char*)str;
 	char* end = (char*)str;

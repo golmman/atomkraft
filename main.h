@@ -31,7 +31,9 @@
  * 
  * using MSVC:
  * 
- * First create a project from existing code in MSVC Express. Don't use the
+ * First install the Visual C++ 2010 Redistributable Package (x86 or x64)
+ * 
+ * Create a project from existing code in MSVC Express. Don't use the
  * -msse -fno-rtti -march=pentium4 options but all the others.
  * Set some optimization flags if necessary. Build once, now you know it is working so
  * copy the atomkraft.sln created by the ide and paste them to the home directory 
@@ -39,7 +41,10 @@
  * Project > Properties > C/C++ Build > Tool Chain Editor > Current Builder to
  * something different than the internal builder. Now go to
  * Project > Properties > C/C++ Build and set the Build command to
- * msbuild ..\src\atomkraft.sln /p:configuration="Release" /target:Clean;Build
+ * msbuild ..\src\atomkraft.sln /p:configuration="Release" /p:OutDir="..\MSVC\\" /target:Clean;Build
+ * or
+ * msbuild ..\src\atomkraft.sln /p:configuration="Release64" /p:Platform="x64" /p:OutDir="..\MSVC64\\" /target:Clean;Build
+ * for 64 bit built.
  * In the same view switch to the tab Behavior and delete the text field
  * Build (incremental build) which is usually set to "all". If the program is now built
  * it creates the atomkraft.exe in src\Release
@@ -54,12 +59,15 @@
 #define MAIN_H_
 
 // choose one version
+// it effects the functionality and the console output
+
+
 
 //#define UCI_VERSION		// intended to run on a common gui like arena, uci output
-#define FICS_VERSION		// fics client version, minimal output
+//#define FICS_VERSION		// fics client version, minimal output
 //#define TEST_VERSION		// testing and debug version, maximal output, reduced uci output
 //#define BOOK_VERSION		// automated book creation version
-//#define SWEN_BOOK_VERSION	// position analysis tool, mainly used for manual book creation
+#define ANALYZE_VERSION	// position analysis tool, mainly used for manual book creation
 
 
 //#define SWEN_VERSION

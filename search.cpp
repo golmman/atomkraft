@@ -640,7 +640,7 @@ namespace {
 #endif
         
         STARTNEW
-#ifdef SWEN_BOOK_VERSION
+#ifdef ANALYZE_VERSION
         if (UCIMultiPV > 1) {
         	cout << "-----------------------------" << endl;
         }

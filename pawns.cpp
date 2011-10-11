@@ -240,10 +240,11 @@ Score PawnInfoTable::evaluate_pawns(const Position& pos, Bitboard ourPawns,
 template<Color Us>
 Score PawnInfo::updateShelter(const Position& pos, Square ksq) {
 
-  const int Shift = (Us == WHITE ? 8 : -8);
+  //OLD const int Shift = (Us == WHITE ? 8 : -8);
 
   Bitboard pawns;
-  int r, shelter = 0;
+  //OLD int r;
+  int shelter = 0;
 
   if (relative_rank(Us, ksq) <= RANK_4)
   {
