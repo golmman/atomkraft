@@ -355,6 +355,7 @@ int main(int argc, char* argv[]) {
 			Options["Ponder"] = UCIOption(false);
 			thinking = true;
 			Move bm, pm;
+			searchMoves[0] = MOVE_NONE;
 			think(pos, limits, searchMoves, bm, pm);
 			thinking = false;
 			Options["Ponder"] = UCIOption(true);
@@ -566,6 +567,7 @@ int main(int argc, char* argv[]) {
 			
 			// start to think
 			thinking = true;
+			searchMoves[0] = MOVE_NONE;
 			think(pos, limits, searchMoves, bestmove, curr_ponder_move);
 			thinking = false;
 			
@@ -871,6 +873,7 @@ QuitAtomkraft:
 			cout << (useImprovements ? "uses" : "doesn't use") << " improvements.";
 			cout << endl;
 			
+			searchMoves[0] = MOVE_NONE;
 			think(pos, limits, searchMoves, bestmove, pondermove);
 			pos.do_setup_move(bestmove);
 			
@@ -902,6 +905,7 @@ QuitAtomkraft:
 				
 			}
 		} else {
+			searchMoves[0] = MOVE_NONE;
 			think(pos, limits, searchMoves, bestmove, pondermove);
 			pos.do_move(bestmove, st[counter]);
 		}
@@ -1088,6 +1092,7 @@ QuitAtomkraft:
 			pthread_t swen_thread;
 			pthread_create(&swen_thread, 0, swen_version_thread, 0);
 			
+			searchMoves[0] = MOVE_NONE;
 			think(pos, limits, searchMoves, bestmove, pondermove);
 			
 			break;

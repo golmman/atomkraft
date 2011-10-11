@@ -186,6 +186,7 @@ namespace {
   //OLD const Score RookHalfOpenFileBonus = make_score(19, 19);
   NEW const Score RookOpenFileBonus = make_score(100, 100);
   NEW const Score RookHalfOpenFileBonus = make_score(50, 50);
+  NEW const Score RookAntiHalfOpenFileBonus = make_score(60, 0);
 
   // Penalty for rooks trapped inside a friendly king which has lost the
   // right to castle.
@@ -911,11 +912,11 @@ namespace {
             // this is good since the pawn can't be removed unless we get an open file
             // so this pawn can almost be treated like passed
             else if (ei.pi->file_is_half_open(Them, f)) {
-            	openfile_score += RookHalfOpenFileBonus;
-            	//score += RookHalfOpenFileBonus;
+            	openfile_score += RookAntiHalfOpenFileBonus;
+            	//score += RookAntiHalfOpenFileBonus;
             	if (ei.file_is_half_open_mp(Them, f)) {
-            		openfile_score += RookHalfOpenFileBonus;
-            		//score += RookHalfOpenFileBonus;
+            		openfile_score += RookAntiHalfOpenFileBonus;
+            		//score += RookAntiHalfOpenFileBonus;
             	}
             }
             
@@ -1331,14 +1332,19 @@ namespace {
         {
             Square blockSq = s + pawn_push(Us);
 
-            // Adjust bonus based on kings proximity
+			STARTOLD
+			// Adjust bonus based on kings proximity
             ebonus += Value(square_distance(pos.king_square(Them), blockSq) * 6 * rr);
             ebonus -= Value(square_distance(pos.king_square(Us), blockSq) * 3 * rr);
 
             // If blockSq is not the queening square then consider also a second push
             if (square_rank(blockSq) != (Us == WHITE ? RANK_8 : RANK_1))
                 ebonus -= Value(square_distance(pos.king_square(Us), blockSq + pawn_push(Us)) * rr);
-
+            ENDOLD
+            
+            NEW // the king fails to support passed pawns in atomic
+            NEW ebonus += Value(square_distance(pos.king_square(Them), blockSq) * 6 * rr);
+            
             // If the pawn is free to advance, increase bonus
             if (pos.square_is_empty(blockSq))
             {
