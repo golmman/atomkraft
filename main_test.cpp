@@ -35,7 +35,7 @@ void main_test() {
 	
 	Position pos("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 0, 0);
 	
-	//Position pos("rnbqkbnr/ppp1p1pp/5p2/3p2N1/8/4P3/PPPP1PPP/RNBQKB1R b KQkq - 0 3", 0, 0);
+	//Position pos("5k2/8/5p2/5Pp1/6Pp/1B5P/8/K7 w - - 0 1", 0, 0);
 	//Position pos("6k1/ppp1bN2/8/1N5p/P3p3/2P1P2K/1P6/8 w - - 0 26", 0, 0);
 	
 	// crash in a game against sordid
@@ -73,7 +73,7 @@ void main_test() {
 	searchMoves[0] = MOVE_NONE;
 	SearchLimits limits;
     //limits.time = 60000;
-	limits.maxTime = 60000;//3600000;
+	limits.maxTime = 5000;//3600000;
 	//limits.maxDepth = 8;
     limits.increment = 0;
     Move bestmove, pondermove;
@@ -137,7 +137,7 @@ void main_test() {
 	Color atomkraftColor = COLOR_NONE;
 	
 	bool tourney = false;
-	Color improvementsUser = COLOR_NONE;
+	Color improvementsUser = BLACK;
 	int tourney_white_wins = 0;
 	int tourney_black_wins = 0;
 	int tourney_draws = 0;

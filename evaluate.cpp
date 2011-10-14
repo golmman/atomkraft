@@ -462,6 +462,7 @@ Value do_evaluate(const Position& pos, Value& margin, bool* expl_threat) {
 		  : ei.mi->scale_factor(pos, BLACK);
 
   // if there is no material difference the game is drawish
+  // calculated here because we already have mat_dif
   if (   ei.mi->game_phase() < PHASE_MIDGAME 
 		  && sf == SCALE_FACTOR_NORMAL
 		  && mat_dif == 0) {
@@ -480,6 +481,15 @@ Value do_evaluate(const Position& pos, Value& margin, bool* expl_threat) {
 		  }
 	  } 
   }
+  
+  // adjacent kings make the game hard to win
+  static const float KING_DIST_SF[] = {0.0f, 0.5f, 0.7f, 0.8f, 0.9f, 1.0f, 1.0f, 1.0f};
+  
+  int k_dist = square_dist(pos.king_square(WHITE), pos.king_square(BLACK));
+  if (ei.mi->game_phase() == PHASE_ENDGAME) {
+	  sf = ScaleFactor(int(float(sf) * KING_DIST_SF[k_dist]));
+  }
+  
   ENDNEW
   
   // If we don't already have an unusual scale factor, check for opposite
@@ -678,7 +688,10 @@ namespace {
 
   template<PieceType Piece, Color Us, bool HasPopCnt, bool Trace>
   Score evaluate_pieces(const Position& pos, EvalInfo& ei, Score& mobility, Bitboard mobilityArea) {
-
+	  
+	NEW Bitboard captures_bb;
+	NEW Square s_aux;
+	NEW Value best_capture;
     Bitboard b;
     Square s, ksq;
     int mob;
@@ -703,6 +716,10 @@ namespace {
             b = rook_attacks_bb(s, pos.occupied_squares() & ~pos.pieces(ROOK, QUEEN, Us));
         else
             assert(false);
+        
+        
+        NEW captures_bb = b & pos.pieces_of_color(Them);
+        
 
         // Update attack info
         ei.attackedBy[Us][Piece] |= b;
@@ -740,30 +757,58 @@ namespace {
 //        NEW}
         
         STARTNEW
+        
+        Value value = Value(0);
+        best_capture = Value(0);
+        
+        //if (useImprovements) {
+        
+        // calculate the current pieces best capture move value
+        while (captures_bb) {
+            s_aux = pop_1st_bit(&captures_bb);
+            
+            value = pos.midgame_value_of_piece_on(s_aux) - pos.midgame_value_of_piece_on(s);
+            
+            for (int k = 1; k < explSq[s].size; ++k) {
+            	if (pos.type_of_piece_on(explSq[s].square[k]) != PAWN) {
 
-		
-		
+            		if (pos.color_of_piece_on(explSq[s].square[k]) == Us) {
+            			value -= pos.midgame_value_of_piece_on(explSq[s].square[k]);
+            		} else if (pos.color_of_piece_on(explSq[s].square[k]) == Them) {
+            			value += pos.midgame_value_of_piece_on(explSq[s].square[k]);
+            		}
+
+            	}
+            }
+            
+            if (best_capture < value) {
+            	best_capture = value;
+            }
+        }
+        score += make_score(best_capture / 10, best_capture / 10);
+        
+        //}
 		
         //if (!useImprovements) {
         	
-        	// more generally: measure the value of the cluster which is affected if explosion occurs
-        	// this is done similiar to pos::see
-        	
-			Value value = Value(0); //-pos.midgame_value_of_piece_on(s);
-			for (int k = 1; k < explSq[s].size; ++k) {
-				if (pos.type_of_piece_on(explSq[s].square[k]) != PAWN) {
-					
-					if (pos.color_of_piece_on(explSq[s].square[k]) == Us) {
-						value -= pos.midgame_value_of_piece_on(explSq[s].square[k]);
-					} else if (pos.color_of_piece_on(explSq[s].square[k]) == Them) {
-						value += pos.midgame_value_of_piece_on(explSq[s].square[k]);
-					}
-					
-				}
-			}
-		
-			value /= 25; // 50 ~ 37.3%, 25 ~ 38.6%, 15 ~ >30%
-			score += make_score(value, value);
+        // more generally: measure the value of the cluster which is affected if explosion occurs
+        // this is done similiar to pos::see
+
+        value = Value(0);
+        for (int k = 1; k < explSq[s].size; ++k) {
+        	if (pos.type_of_piece_on(explSq[s].square[k]) != PAWN) {
+
+        		if (pos.color_of_piece_on(explSq[s].square[k]) == Us) {
+        			value -= pos.midgame_value_of_piece_on(explSq[s].square[k]);
+        		} else if (pos.color_of_piece_on(explSq[s].square[k]) == Them) {
+        			value += pos.midgame_value_of_piece_on(explSq[s].square[k]);
+        		}
+
+        	}
+        }
+
+        value /= 25; // 50 ~ 37.3%, 25 ~ 38.6%, 15 ~ >30%
+        score += make_score(value, value);
         
 //        } else {
 //		
@@ -826,14 +871,32 @@ namespace {
         
         
         STARTNEW
-        // queen tropism
+        
         static const int QUEEN_TROPISM_BONUS[] = {0, 250, 100, 33, 12, 3, 1, 0, 0};
+        
         if (Piece == QUEEN) {
+        	// queen tropism
         	ksq = pos.king_square(Them);
         	if (square_dist(ksq, pos.king_square(Us)) > 1) {
 				int queen_tropism = QUEEN_TROPISM_BONUS[square_dist(s, ksq)];
 				score += make_score(queen_tropism, queen_tropism);
         	}
+        	
+        	
+        	// anti half open file
+        	if (relative_rank(Us, s) <= RANK_2) {
+				f = square_file(s);
+				if (!ei.pi->file_is_half_open(Us, f) && ei.pi->file_is_half_open(Them, f)) {
+					
+					score += make_score(30, 0);
+					if (ei.file_is_half_open_mp(Them, f)) {
+						score += make_score(30, 0);
+					}
+	 
+				}
+        	}
+        	
+        	
         }
         ENDNEW
         
@@ -912,12 +975,14 @@ namespace {
             // this is good since the pawn can't be removed unless we get an open file
             // so this pawn can almost be treated like passed
             else if (ei.pi->file_is_half_open(Them, f)) {
+            
             	openfile_score += RookAntiHalfOpenFileBonus;
             	//score += RookAntiHalfOpenFileBonus;
             	if (ei.file_is_half_open_mp(Them, f)) {
             		openfile_score += RookAntiHalfOpenFileBonus;
             		//score += RookAntiHalfOpenFileBonus;
             	}
+            	
             }
             
             
@@ -926,6 +991,19 @@ namespace {
             if (abs(f - square_file(ksq)) <= 1) {
             	openfile_score = 5 * openfile_score / 4;
             }
+            
+            
+            
+            
+//            if (useImprovements) {
+//            	// lower the score if both rooks occupy the same file
+//            	if (pos.piece_count(Us, ROOK) >= 2) {
+//            		if (   square_file(pos.piece_list(Us, ROOK, 0))
+//            			== square_file(pos.piece_list(Us, ROOK, 1))) {
+//            			openfile_score = 4 * openfile_score / 7;
+//            		}
+//            	}
+//            }
             
             score += openfile_score;
             
@@ -1044,8 +1122,6 @@ namespace {
     Bitboard undefended, b, b1, b2, safe;
     int attackUnits;
     const Square ksq = pos.king_square(Us);
-
-
     
     
     // King shelter

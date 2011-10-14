@@ -301,6 +301,17 @@ private:
   // Piece lists
   Square pieceList[2][8][16]; // [color][pieceType][index]
   int index[64]; // [square]
+  
+  STARTNEW
+  // stores all the adjacent squares to a square which are occupied by pieces
+  // OccNeighSquares[64][0] stores the number of occupied squares
+  // this is updated after a move was made
+  Square OccNeighSquares[64][9];
+  
+  // stores the value of all the pieces which are effected if an explosion occures on a square
+  // the score is the same as calculated in 'see' but always from white's point of view
+  Value SqExplValue[64];
+  ENDNEW
 
   // Other info
   Color sideToMove;

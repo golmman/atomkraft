@@ -63,6 +63,12 @@ void appendPGN(
 		
 		//printf("%s\n", move_to_string(moves[k]).c_str());
 		
+		if (!pos.move_is_legal(moves[k])) {
+			cout << "PGN: ILLEGAL MOVE, ply: " << move_count << endl;
+			break;
+		}
+		
+		
 		if (curr_color == WHITE) {
 			fprintf(file, "%i. %s ", move_number, move_to_san(pos, moves[k]).c_str());
 		} else if (curr_color == BLACK) {	
@@ -72,6 +78,11 @@ void appendPGN(
 				fprintf(file, "%s ", move_to_san(pos, moves[k]).c_str());
 			}
 			++move_number;
+		}
+		
+		if (move_number % 7 == 0) {
+			// Babaschess reads no lines longer than 512 bytes!
+			fprintf(file, "\n");
 		}
 		
 		pos.do_setup_move(moves[k]);

@@ -57,7 +57,7 @@ using namespace std;
 /// current date (in the format YYMMDD) is used as a version number.
 
 static const string AppName = "atomkraft";
-static const string EngineVersion = "0.0.1";
+static const string EngineVersion = "1.0.0";
 static const string AppTag  = "";
 
 

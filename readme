@@ -1,0 +1,110 @@
+    atomkraft - README file
+--------------------------------
+
+
+
+
+atomkraft is based on Stockfish 2.1.1, which has some kind of license:
+
+  Stockfish, a UCI chess playing engine derived from Glaurung 2.1
+  Copyright (C) 2004-2008 Tord Romstad (Glaurung author)
+  Copyright (C) 2008-2010 Marco Costalba, Joona Kiiski, Tord Romstad
+
+  Stockfish is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Stockfish is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  
+  
+  
+I don't know what that means for the atomkraft code (I haven't even read the text once), 
+but i accept all the rules it implies. (I hope I haven't infringed it yet)
+So do whatever you want with the atomkraft code but keep in mind that it uses Stockfish
+which uses the license above.
+
+
+
+
+How to compile with eclipse cdt on windows xp?
+----------------------------------------------
+
+This is how it works on MY computer:
+
+First get the pthread libraries from http://sourceware.org/pthreads-win32/:
+Put the three *.h files into the include directories, 
+download libpthreadGCE2.a (MinGW) and pthreadVCE2.lib (MSVC) rename them 
+to libpthread.a and pthread.lib respectively put them in the lib directories.
+Download pthreadGCE2.dll and pthreadVCE2.dll and put them 
+into the WINDOWS\system32 directory.
+To run the atomkraft.exe you will need mingwm10.dll and pthreadGCE2.dll if 
+built with MinGW and msvcp100.dll, msvcr100.dll, pthreadVCE2.dll (win32 only) if built with MSVC.
+
+using MinGW toolchain:
+
+Project > Properties > C/C++ Build > Settings > GCC C++ Compiler > Preprocessor > Defined symbols:
+-DNDEBUG -DOLD_LOCKS -DUSE_PREFETCH (see types.h for description)
+
+Project > Properties > C/C++ Build > Settings > GCC C++ Compiler > Miscellaneous > other flags:
+-msse -fno-rtti -march=pentium4
+
+Project > Properties > C/C++ Build > Settings > MinGW C++ Linker > Libraries > Libraries:
+pthread, ws2_32, mswsock, advapi32
+
+using MSVC:
+
+First install the Visual C++ 2010 Redistributable Package (x86 or x64)
+
+Create a project from existing code in MSVC Express. Don't use the
+-msse -fno-rtti -march=pentium4 options but all the others.
+Set the output directories to $(SolutionDir)\..\MSVC or something, otherwise
+the msvc stuff clutters up the src directory...
+If you want to build x64 set platform to MicrosoftSDK 7.1 .
+Set some optimization flags if necessary. Build once, now you know it is working so
+copy the atomkraft.sln created by the ide and paste them to the home directory 
+of the atomkraft workspace. Create a new build configuration and set
+Project > Properties > C/C++ Build > Tool Chain Editor > Current Builder to
+something different than the internal builder. Now go to
+Project > Properties > C/C++ Build and set the Build command to
+msbuild ..\src\atomkraft.sln /p:configuration="Release" /p:OutDir="..\MSVC\\" /target:Clean;Build
+or
+msbuild ..\src\atomkraft.sln /p:configuration="Release64" /p:Platform="x64" /p:OutDir="..\MSVC64\\" /target:Clean;Build
+for 64 bit built.
+In the same view switch to the tab Behavior and delete the text field
+Build (incremental build) which is usually set to "all". If the program is now built
+it creates the atomkraft.exe in src\..\MSVC
+
+
+
+analysis version of atomkraft
+--------------------------------
+
+After you started the executable it asks you what to do. 
+Type a number 1 to 5 and hit the return key. A short explanation:
+
+ 1 --> set position (default: starting position)
+Before you use this option go to Babaschess (or any other interface) and
+copy a position you set up before to the clipboard as FEN.
+(Babaschess -> edit -> copy to clipboard as fen position)
+Hitting '1' again in the console window will paste the clipboard to atomkraft.
+
+ 2 --> set hash table size (default: 512 mb)
+This value should not exceed half of your total available ram.
+Powers of 2 are most performant.
+
+ 3 --> set number of variants (multi pv) (default: 1)
+Changing this value to n makes atomkraft calculate and show you the n best
+variants.
+
+ 4 --> analyze
+Analyse!
+
+ 5 --> quit
+Quit!

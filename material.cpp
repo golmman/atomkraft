@@ -131,8 +131,6 @@ MaterialInfo* MaterialInfoTable::get_material_info(const Position& pos) const {
   int pcount_b = pos.piece_count(BLACK, PAWN);
   Value npm_w = pos.non_pawn_material(WHITE);
   Value npm_b = pos.non_pawn_material(BLACK);
-  Square ksq_w = pos.king_square(WHITE);
-  Square ksq_b = pos.king_square(BLACK);
   
   if (pcount_w - pcount_b == 1) {
 	  // white is a pawn up
@@ -140,7 +138,7 @@ MaterialInfo* MaterialInfoTable::get_material_info(const Position& pos) const {
 	  if (npm_w == VALUE_ZERO) {
 		  // but has no material other than pawns
 		  if (npm_b > 0 && npm_b <= RookValueMidgame) {
-			  // if black has a knight, bishop or rook the game is still hard to win 
+			  // if black has a knight, bishop or rook the game is still hard to win for black
 			  mi->factor[BLACK] = 32;
 		  }
 	  }
@@ -150,17 +148,27 @@ MaterialInfo* MaterialInfoTable::get_material_info(const Position& pos) const {
 	  if (npm_b == VALUE_ZERO) {
 		  // but has no material other than pawns
 		  if (npm_w > 0 && npm_w <= RookValueMidgame) {
-			  // if white has a knight, bishop or rook the game is still hard to win 
+			  // if white has a knight, bishop or rook the game is still hard to win for white
 			  mi->factor[WHITE] = 32;
 		  }
 	  }
+  } else if (pcount_w == pcount_b) {
+	  // both side have the same number of pawns
+	  
+	  if (   npm_b == VALUE_ZERO 
+		  && pos.piece_count(WHITE, BISHOP) == 1 
+		  && npm_w <= KnightValueMidgame) {
+		  // but white is up a bishop, it's still very hard to win for white in most situations
+		  mi->factor[WHITE] = 16;
+	  } else if (   npm_w == VALUE_ZERO 
+			     && pos.piece_count(BLACK, BISHOP) == 1 
+			     && npm_b <= KnightValueMidgame) {
+		  // but black is up a bishop, it's still very hard to win for black in most situations
+		  mi->factor[BLACK] = 16;
+	  }
+	  
   }
   
-  // adjacent kings make the game hard to win
-  int k_dist = square_dist(ksq_w, ksq_b);
-  if (k_dist <= 5) {
-	  mi->factor[WHITE] = mi->factor[BLACK] = SCALE_FACTOR_NORMAL - (5 - k_dist) * 12;
-  }
   ENDNEW
   
 
