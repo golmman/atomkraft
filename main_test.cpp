@@ -18,13 +18,73 @@
 #include "ucioption.h"
 #include "book.h"
 #include "pgn.h"
+#include "tuning.h"
 
 #include <iostream>
 #include <time.h>
+#include <math.h>
 using namespace std;
 
 
+int flipcoin(float p) {
+	if (p < 0) p = 0;
+	if (p > 1) p = 1;
+	
+	return (float(rand() % RAND_MAX) <= p * RAND_MAX) ? 1 : 0;
+}
+
+double p(double t) {
+	return 0.3 * exp(-t * t) + 0.2;
+}
+
+double p2(double x, double y) {
+	return 0.5 * exp(-x * x - y * y);
+}
+
+
 void main_test() {
+	
+	int resultWhite, resultBlack;
+	
+	tune_t arr[] = {1.0, -0.75};
+	
+	VarTuning vt(sizeof(arr) / sizeof(tune_t), &arr[0], &arr[1]);
+	vt.print_vars();
+	
+	for (int k = 0; k < 3000; ++k) {
+	
+		vt.prepare_deltas();
+		//vt.print_deltas();
+		
+		vt.prepare_vars(WHITE);
+		//vt.print_vars();
+		
+		resultWhite = flipcoin(p2(arr[0], arr[1]));
+	
+		vt.prepare_vars(BLACK);
+		//vt.print_vars();
+		
+		resultBlack = flipcoin(p2(arr[0], arr[1]));
+		
+		if (resultWhite > resultBlack) {
+			vt.update_vars(WHITE_WINS);
+			cout << k << " " << vt.var[0].historySdev << " " 
+					<< vt.var[0].delta << " " << vt.var[0].applyFactor << " ";
+			vt.print_vars();
+		} else if (resultWhite < resultBlack) {
+			vt.update_vars(BLACK_WINS);
+			cout << k << " " << vt.var[0].historySdev << " " 
+					<< vt.var[0].delta << " " << vt.var[0].applyFactor << " ";
+			vt.print_vars();
+		}
+		
+		
+		//cout << "-----" << endl;
+		
+	}
+	return;
+	
+	
 	
 	const char BOOK_FILE[] = "d:/eao-full.bin";
 	
@@ -59,9 +119,9 @@ void main_test() {
 //	
 //	return 0;
 	
+	cout << "test1" << endl;
 
-
-	Options["Hash"] = UCIOption(128, 4, 8192);
+	Options["Hash"] = UCIOption(4, 4, 8192);
 	Options["Book File"] = UCIOption(BOOK_FILE);
 	Options["OwnBook"] = UCIOption(true);
 	Options["Ponder"] = UCIOption(false);
@@ -160,6 +220,22 @@ void main_test() {
 		return;
 	}
 	
+	float apply_factor = 0.002f;
+	float var1 = 600.0f;
+	float varsum = 0.0f;
+	float sdevsum = 0.0f;
+	float mean;
+	float sdev;
+	float delta = var1 / 5;
+	float deltafactor;
+	
+	bool deltaSdev = false;
+	
+	const int INIT_TIME = 5000;
+	const int INIT_INC = 100;
+	
+	int time_white = INIT_TIME;
+	int time_black = INIT_TIME;
 	
 	srand(time(0));
 	
@@ -168,37 +244,45 @@ void main_test() {
 		if (counter >= 1000) counter = 0;
 		
 		if (tourney) {
-			float VALUE_SCALE_aux;
+			float VALUE_SCALE_mid = 0.75f;
+			float VALUE_SCALE_end = 2.0f;
+			
+			
+			memset(&limits, 0, sizeof(SearchLimits));
 			
 			if (pos.side_to_move() == improvementsUser) {
 				useImprovements = true;
 				
-//				VALUE_SCALE_aux = 0.75f;
-//				PawnValueMidgame   = Value(int(200  * VALUE_SCALE_aux));
-//				PawnValueEndgame   = Value(int(300  * VALUE_SCALE_aux));
-//				KnightValueMidgame = Value(int(300  * VALUE_SCALE_aux));
-//				KnightValueEndgame = Value(int(350  * VALUE_SCALE_aux));
-//				BishopValueMidgame = Value(int(300  * VALUE_SCALE_aux));
-//				BishopValueEndgame = Value(int(320  * VALUE_SCALE_aux));
-//				RookValueMidgame   = Value(int(600  * VALUE_SCALE_aux));
-//				RookValueEndgame   = Value(int(800  * VALUE_SCALE_aux));
-//				QueenValueMidgame  = Value(int(1400 * VALUE_SCALE_aux));
-//				QueenValueEndgame  = Value(int(1700 * VALUE_SCALE_aux));
+				//matDifFactor = var1 + delta;
+				
+				//VALUE_SCALE_mid = 0.75f;
+				PawnValueMidgame   = Value(int(200  * VALUE_SCALE_mid));
+				PawnValueEndgame   = Value(int(300  * VALUE_SCALE_mid));
+				KnightValueMidgame = Value(int(300  * VALUE_SCALE_mid));
+				KnightValueEndgame = Value(int(350  * VALUE_SCALE_mid));
+				BishopValueMidgame = Value(int(300  * VALUE_SCALE_mid));
+				BishopValueEndgame = Value(int(320  * VALUE_SCALE_mid));
+				RookValueMidgame   = Value(int((var1 + delta) * VALUE_SCALE_mid));
+				RookValueEndgame   = Value(int(800  * VALUE_SCALE_mid));
+				QueenValueMidgame  = Value(int(1300 * VALUE_SCALE_mid));
+				QueenValueEndgame  = Value(int(1600 * VALUE_SCALE_mid));
 				
 			} else {
 				useImprovements = false;
 				
-//				VALUE_SCALE_aux = 0.75f;
-//				PawnValueMidgame   = Value(int(200  * VALUE_SCALE_aux));
-//				PawnValueEndgame   = Value(int(300  * VALUE_SCALE_aux));
-//				KnightValueMidgame = Value(int(300  * VALUE_SCALE_aux));
-//				KnightValueEndgame = Value(int(350  * VALUE_SCALE_aux));
-//				BishopValueMidgame = Value(int(300  * VALUE_SCALE_aux));
-//				BishopValueEndgame = Value(int(320  * VALUE_SCALE_aux));
-//				RookValueMidgame   = Value(int(600  * VALUE_SCALE_aux));
-//				RookValueEndgame   = Value(int(800  * VALUE_SCALE_aux));
-//				QueenValueMidgame  = Value(int(1200 * VALUE_SCALE_aux));
-//				QueenValueEndgame  = Value(int(1400 * VALUE_SCALE_aux));
+				//matDifFactor = var1 - delta;
+				
+				//VALUE_SCALE_mid = 0.75f;
+				PawnValueMidgame   = Value(int(200  * VALUE_SCALE_mid));
+				PawnValueEndgame   = Value(int(300  * VALUE_SCALE_mid));
+				KnightValueMidgame = Value(int(300  * VALUE_SCALE_mid));
+				KnightValueEndgame = Value(int(350  * VALUE_SCALE_mid));
+				BishopValueMidgame = Value(int(300  * VALUE_SCALE_mid));
+				BishopValueEndgame = Value(int(320  * VALUE_SCALE_mid));
+				RookValueMidgame   = Value(int((var1 - delta) * VALUE_SCALE_mid));
+				RookValueEndgame   = Value(int(800  * VALUE_SCALE_mid));
+				QueenValueMidgame  = Value(int(1300 * VALUE_SCALE_mid));
+				QueenValueEndgame  = Value(int(1600 * VALUE_SCALE_mid));
 			}
 			
 			if (pos.side_to_move() == WHITE) {
@@ -214,18 +298,38 @@ void main_test() {
 				 * the nps much we use this configuration for testing changes
 				 * to the search function.
 				 */
-				limits.maxNodes = 20000 + rand() % 5000;
+				
+				//limits.maxNodes = 10000 + rand() % 2500;
 			}
 			
 			TT.clear();
 			
-			cout << (pos.side_to_move() == WHITE ? "White" : "Black");
-			cout << " started to think and ";
-			cout << (useImprovements ? "uses" : "doesn't use") << " improvements.";
-			cout << endl;
+//			cout << (pos.side_to_move() == WHITE ? "White" : "Black");
+//			cout << " started to think and ";
+//			cout << (useImprovements ? "uses" : "doesn't use") << " improvements.";
+//			cout << endl;
+			
+			if (pos.side_to_move() == WHITE) {
+				limits.time = time_white;
+				limits.increment = INIT_INC;
+			} else if (pos.side_to_move() == BLACK) {
+				limits.time = time_black;
+				limits.increment = INIT_INC;
+			}
+			
 			
 			searchMoves[0] = MOVE_NONE;
+			
+			clock_t used_time = clock();
 			think(pos, limits, searchMoves, bestmove, pondermove);
+			
+			// adjust time
+			if (pos.side_to_move() == WHITE) {
+				time_white -= (clock() - used_time);
+			} else if (pos.side_to_move() == BLACK) {
+				time_black -= (clock() - used_time);
+			}
+			
 			pos.do_setup_move(bestmove);
 			
 			tourney_moves[tourney_move_count] = bestmove;
@@ -262,25 +366,25 @@ void main_test() {
 		}
 		
 		//print_bb(pos.checkers());
-		print_pos(pos);
+		//print_pos(pos);
 		
 		if (!tourney) {
 			cout << "book moves: "; book.print_all_moves(pos);
 		} else {
-			cout << "tourney_move_count: " << tourney_move_count << endl;
+			//cout << "tourney_move_count: " << tourney_move_count << endl;
 		}
 		
-		if (pos.is_mate() || pos.is_draw()) {
-			cout << "  *********************************  " << endl;
-			cout << "  *                               *  " << endl;
-			cout << "  *     position  draw / mate     *  " << endl;
-			cout << "  *                               *  " << endl;
-			cout << "  *********************************  " << endl;
+		if (pos.is_mate() || pos.is_draw<false>()) {
+//			cout << "  *********************************  " << endl;
+//			cout << "  *                               *  " << endl;
+//			cout << "  *     position  draw / mate     *  " << endl;
+//			cout << "  *                               *  " << endl;
+//			cout << "  *********************************  " << endl;
 			
 			if (tourney) {
 				ResultPGN result = NO_RESULT;
 				
-				if (pos.is_draw()) {
+				if (pos.is_draw<false>()) {
 					++tourney_draws;
 					result = DRAW;
 				} else if (pos.is_mate()) {
@@ -293,29 +397,55 @@ void main_test() {
 					}
 				}
 				
-				cout << "tourney results: " << endl;
-				cout << "white wins: " << tourney_white_wins << endl;
-				cout << "black wins: " << tourney_black_wins << endl;
-				cout << "draws:      " << tourney_draws << endl;
-				cout << "black score: " 
+				varsum += var1;
+				mean = varsum / (tourney_game_count+1);
+				sdevsum += ((var1 - mean) * (var1 - mean));
+				sdev = sqrt(sdevsum / (tourney_game_count+1));
+				
+				
+				if (deltaSdev) {
+					delta = deltafactor * sdev;
+				} else {
+					if (tourney_game_count > 1000 || sdev > delta) {
+						deltafactor = delta / sdev;
+						deltaSdev = true;
+					}
+				}
+				
+				//cout << "tourney results: " << endl;
+				cout 
+//					 << "w: " << tourney_white_wins
+//					 << ", b: " << tourney_black_wins
+//					 << ", d: " << tourney_draws
+//				     << " --- " 
 					 << float(tourney_black_wins) + float(tourney_draws) / 2 << "/" 
 					 << tourney_white_wins + tourney_black_wins + tourney_draws
 					 << " ~ " <<  100.0f * (float(tourney_black_wins) + float(tourney_draws) / 2)
 					 	 	 	 / (tourney_white_wins + tourney_black_wins + tourney_draws)
-					 << "%" << endl;
+					 << "%" 
+					 << ", var1: " << var1
+					 << ", mean: " << mean
+					 << ", sdev: " << sdev
+					 << ", delta: " << delta
+					 << endl;
 				
-#ifdef SWEN_VERSION
-				appendPGN("atomkraft_tourney.pgn",
-						"atomkraft", "atomkraft", result, 2, 0, 
-						"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-						tourney_moves, tourney_move_count);
-#else
-				appendPGN("d:/atomkraft_tourney.pgn",
-						"atomkraft", "atomkraft", result, 2, 0, 
-						"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-						tourney_moves, tourney_move_count);
-#endif
 				
+				// write pgn file
+//#ifdef SWEN_VERSION
+//				appendPGN("atomkraft_tourney.pgn",
+//						"atomkraft", "atomkraft", result, 2, 0, 
+//						"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+//						tourney_moves, tourney_move_count);
+//#else
+//				appendPGN("d:/atomkraft_tourney.pgn",
+//						"atomkraft", "atomkraft", result, 2, 0, 
+//						"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+//						tourney_moves, tourney_move_count);
+//#endif
+				
+				
+				time_white = INIT_TIME;
+				time_black = INIT_TIME;
 				
 				tourney_move_count = 0;
 				
@@ -324,13 +454,38 @@ void main_test() {
 				counter = 0;
 				++tourney_game_count;
 				
+				
+				
+				//
+				if (result == WHITE_WINS) {
+					if (improvementsUser == WHITE) {
+						var1 += delta * apply_factor;
+					} else {
+						var1 -= delta * apply_factor;
+					}
+				} else if (result == BLACK_WINS) {
+					if (improvementsUser == BLACK) {
+						var1 += delta * apply_factor;
+					} else {
+						var1 -= delta * apply_factor;
+					}
+				}
+				
+				
+				// change user
+				if (tourney_game_count % 2) {
+					improvementsUser = WHITE;
+				} else {
+					improvementsUser = BLACK;
+				}
+				
 				if (tourney_game_count >= tourney_max_game_count) {
 					Beep(2700, 500);
 					system("pause");
 					break;
 				}
 				
-				Sleep(2000);
+				//Sleep(2000);
 			} else {
 				break;
 			}

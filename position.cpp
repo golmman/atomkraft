@@ -291,11 +291,106 @@ void Position::from_fen(const string& fen, bool isChess960) {
   st->value = compute_value();
   st->npMaterial[WHITE] = compute_non_pawn_material(WHITE);
   st->npMaterial[BLACK] = compute_non_pawn_material(BLACK);
+  
+  STARTNEW
+  // init neighborhood lists 
+//  write_neigh_arrays(neighOccSquares, neighExplValue);
+//  assert(neigh_is_ok());
+  ENDNEW
+  
   return;
 
 incorrect_fen:
   cout << "Error in FEN string: " << fen << endl;
 }
+
+
+STARTNEW
+// create neighborhood arrays
+void Position::write_neigh_arrays(Square noSquares[64][9], Value neValue[64]) {
+	for (Square s = SQ_A1; s < SQ_NONE; ++s) {
+		
+		noSquares[s][0] = Square(0);
+		neValue[s] = VALUE_ZERO;
+		
+		// we are only interested in occupied squares
+		if (type_of_piece_on(s) != PIECE_TYPE_NONE) {
+
+			// central squares value
+			neValue[s] = color_of_piece_on(s) == BLACK ? 
+					midgame_value_of_piece_on(s) : -midgame_value_of_piece_on(s);
+			
+			
+			for (int k = 1; k < explSq[s].size; ++k) {
+
+				if (type_of_piece_on(explSq[s].square[k]) != PIECE_TYPE_NONE) {
+					cout << s << " " << noSquares[s][0] << " " << explSq[s].square[k] << endl;
+					noSquares[s][noSquares[s][0] + 1] = explSq[s].square[k];
+					++noSquares[s][0];
+					
+				}
+				
+				// neighborhood square value
+				if (type_of_piece_on(explSq[s].square[k]) != PAWN) {
+					if (color_of_piece_on(explSq[s].square[k]) == WHITE) {
+						neValue[s] -= midgame_value_of_piece_on(explSq[s].square[k]);
+					} else if (color_of_piece_on(explSq[s].square[k]) == BLACK) {
+						neValue[s] += midgame_value_of_piece_on(explSq[s].square[k]);
+					}
+				}
+
+			}
+			
+			cout << s << " " << neValue[s] << endl;
+
+		}
+	}
+	
+	cout << endl;
+}
+
+// checks if neighborhood arrays are ok, for debugging
+bool Position::neigh_is_ok() {
+	
+	Square noSquares[64][9];
+	Value neValue[64];
+	
+	write_neigh_arrays(noSquares, neValue);
+	
+	for (Square s = SQ_A1; s < SQ_NONE; ++s) {
+		cout << s << endl;
+		
+		if (neValue[s] != neigh_expl_value(s)) {
+			
+#ifndef NDEBUG
+			cout << "neValue - Square: " << s 
+				 << ", neValue: " << neValue[s] 
+				 << ", neigh_expl_value: " << neigh_expl_value(s) << endl;
+#endif
+			
+			return false;
+		}
+		
+		
+		Bitboard b1 = EmptyBoardBB;
+		Bitboard b2 = EmptyBoardBB;
+		
+		for (int k = 1; k <= noSquares[s][0]; ++k) {
+			set_bit(&b1, noSquares[s][k]);
+		}
+		for (int k = 1; k <= neighOccSquares[s][0]; ++k) {
+			set_bit(&b2, neighOccSquares[s][k]);
+		}
+		
+		if (b1 != b2) {
+			return false;
+		}
+	}
+	
+	return true;
+}
+
+ENDNEW
 
 
 /// Position::set_castling_rights() sets castling parameters castling availability.
@@ -2135,6 +2230,7 @@ int Position::see(Square from, Square to) const {
   	  }
   }
   
+  // add MinorPiecePawnValueDiff so minorpiece-pawn captures have see 0?
   return score;
   ENDNEW
   
@@ -2395,6 +2491,7 @@ Value Position::compute_non_pawn_material(Color c) const {
 /// repetition, or the 50 moves rule. It does not detect stalemates, this
 /// must be done by the search.
 
+template<bool SkipRepetition>
 bool Position::is_draw() const {
 
   // Draw by material?
@@ -2407,13 +2504,32 @@ bool Position::is_draw() const {
       return true;
 
   // Draw by repetition?
-  for (int i = 4, e = Min(Min(st->gamePly, st->rule50), st->pliesFromNull); i <= e; i += 2)
-      if (history[st->gamePly - i] == st->key)
-          return true;
+  if (!SkipRepetition)
+  {
+      int i = 4, e = Min(st->rule50, st->pliesFromNull);
+
+      if (i <= e)
+      {
+          StateInfo* stp = st->previous->previous;
+
+          do {
+              stp = stp->previous->previous;
+
+              if (stp->key == st->key)
+                  return true;
+
+              i +=2;
+
+          } while (i <= e);
+      }
+  }
 
   return false;
 }
 
+// Explicit template instantiations
+template bool Position::is_draw<false>() const;
+template bool Position::is_draw<true>() const;
 
 /// Position::is_mate() returns true or false depending on whether the
 /// side to move is checkmated.

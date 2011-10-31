@@ -18,9 +18,9 @@
 
 //#define UCI_VERSION		// intended to run on a common gui like arena, uci output
 //#define FICS_VERSION		// fics client version, minimal output
-//#define TEST_VERSION		// testing and debug version, maximal output, reduced uci output
+#define TEST_VERSION		// testing and debug version, maximal output, reduced uci output
 //#define BOOK_VERSION		// automated book creation version
-#define ANALYZE_VERSION	// position analysis tool, mainly used for manual book creation
+//#define ANALYZE_VERSION	// position analysis tool, mainly used for manual book creation
 
 
 //#define SWEN_VERSION

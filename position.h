@@ -180,6 +180,11 @@ public:
   // Piece lists
   Square piece_list(Color c, PieceType pt, int index) const;
   const Square* piece_list_begin(Color c, PieceType pt) const;
+  
+  STARTNEW
+  Square neigh_occ_squares(Square s, int index) const;
+  Value neigh_expl_value(Square s) const;
+  ENDNEW
 
   // Information about attacks to or from a given square
   Bitboard attackers_to(Square s) const;
@@ -235,7 +240,7 @@ public:
 
   // Game termination checks
   bool is_mate() const;
-  bool is_draw() const;
+  template<bool SkipRepetition> bool is_draw() const;
 
   // Number of plies from starting position
   int startpos_ply_counter() const;
@@ -253,6 +258,9 @@ public:
 
   // Position consistency check, for debugging
   bool is_ok(int* failedStep = NULL) const;
+  
+  NEW void write_neigh_arrays(Square noSquares[64][9], Value neValue[64]);
+  NEW bool neigh_is_ok();
 
   // Static member functions
   static void init_zobrist();
@@ -306,11 +314,16 @@ private:
   // stores all the adjacent squares to a square which are occupied by pieces
   // OccNeighSquares[64][0] stores the number of occupied squares
   // this is updated after a move was made
-  Square OccNeighSquares[64][9];
+  Square neighOccSquares[64][9];
   
-  // stores the value of all the pieces which are effected if an explosion occures on a square
-  // the score is the same as calculated in 'see' but always from white's point of view
-  Value SqExplValue[64];
+  // stores the value of all the pieces which are effected if an explosion occures on a square.
+  // the score is the same as calculated in 'see' but always from white's point of view.
+  Value neighExplValue[64];
+  
+  // note:
+  // - pawns are taken into account in neighOccSquares but not in neighExplValue (except if central)
+  // - the central square is taken into account in neighExplValue but not in neighOccSquares
+  // - unless the central square s is occupied neighOccSquares[s][0] and neighExplValue[s] are 0 
   ENDNEW
 
   // Other info
@@ -421,6 +434,16 @@ inline Square Position::piece_list(Color c, PieceType pt, int idx) const {
 inline const Square* Position::piece_list_begin(Color c, PieceType pt) const {
   return pieceList[c][pt];
 }
+
+STARTNEW
+inline Square Position::neigh_occ_squares(Square s, int index) const {
+	return neighOccSquares[s][index];
+}
+
+inline Value Position::neigh_expl_value(Square s) const {
+	return neighExplValue[s];
+}
+ENDNEW
 
 inline Square Position::ep_square() const {
   return st->epSquare;

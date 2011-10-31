@@ -32,6 +32,8 @@
 #include "atomicdata.h"
 #include "debug.h"
 
+NEW int matDifFactor = 200;
+
 namespace {
 
   // Struct EvalInfo contains various information computed and collected
@@ -125,7 +127,14 @@ namespace {
        S( 29,116), S( 30,117), S( 31,118), S(32,118) },
        
        
-     { S(-10,-18), S( -8,-13), S( -6, -7), S(-3, -2), S(-1,  3), S( 1,  8), // Queens
+//     { S(-10,-18), S( -8,-13), S( -6, -7), S(-3, -2), S(-1,  3), S( 1,  8), // Queens
+//       S(  3, 13), S(  5, 19), S(  8, 23), S(10, 27), S(12, 32), S(15, 34),
+//       S( 16, 35), S( 17, 35), S( 18, 35), S(20, 35), S(20, 35), S(20, 35),
+//       S( 20, 35), S( 20, 35), S( 20, 35), S(20, 35), S(20, 35), S(20, 35),
+//       S( 20, 35), S( 20, 35), S( 20, 35), S(20, 35), S(20, 35), S(20, 35),
+//       S( 20, 35), S( 20, 35) }
+     
+     { S(-40,-40), S(-30,-30), S(-20,-20), S(-10,-10), S(-1,  3), S( 1,  8), // Queens
        S(  3, 13), S(  5, 19), S(  8, 23), S(10, 27), S(12, 32), S(15, 34),
        S( 16, 35), S( 17, 35), S( 18, 35), S(20, 35), S(20, 35), S(20, 35),
        S( 20, 35), S( 20, 35), S( 20, 35), S(20, 35), S(20, 35), S(20, 35),
@@ -366,7 +375,7 @@ Value do_evaluate(const Position& pos, Value& margin, bool* expl_threat) {
   //if (useImprovements) {
 	//  score += make_score(mat_dif * PawnValueMidgame / 3, mat_dif * 2 * PawnValueMidgame);
   //} else {
-	  score += make_score(mat_dif * PawnValueMidgame / 4, mat_dif * PawnValueMidgame);
+	  score += make_score(mat_dif * matDifFactor / 4, mat_dif * matDifFactor);
   //}
 
   ENDNEW
@@ -689,9 +698,9 @@ namespace {
   template<PieceType Piece, Color Us, bool HasPopCnt, bool Trace>
   Score evaluate_pieces(const Position& pos, EvalInfo& ei, Score& mobility, Bitboard mobilityArea) {
 	  
-	NEW Bitboard captures_bb;
-	NEW Square s_aux;
-	NEW Value best_capture;
+	//NEW Bitboard captures_bb;
+	//NEW Square s_aux;
+	//NEW Value best_capture;
     Bitboard b;
     Square s, ksq;
     int mob;
@@ -718,7 +727,7 @@ namespace {
             assert(false);
         
         
-        NEW captures_bb = b & pos.pieces_of_color(Them);
+        //NEW captures_bb = b & pos.pieces_of_color(Them);
         
 
         // Update attack info
@@ -735,19 +744,23 @@ namespace {
         }
 
         // Mobility
+        STARTOLD
         mob = (Piece != QUEEN ? count_1s<Max15>(b & mobilityArea)
                               : count_1s<Full >(b & mobilityArea));
         
-        OLD mobility += MobilityBonus[Piece][mob];
+        mobility += MobilityBonus[Piece][mob];
+        ENDOLD
         
-        NEW // seems to be good
-        NEW mobility += 2 * MobilityBonus[Piece][mob];
+        STARTNEW
+        mob = (Piece != QUEEN ? count_1s<Max15>(b & mobilityArea)
+                              : count_1s<Full >(b & mobilityArea & ~pos.pieces_of_color(Them)));
+        // seems to be good
+        mobility += 2 * MobilityBonus[Piece][mob];
         
-        //if (useImprovements) {
-        NEW if (Piece == QUEEN) {
-        NEW		mobility += MobilityBonus[Piece][mob];
-        NEW }
-        //}
+        if (Piece == QUEEN) {
+        	mobility += MobilityBonus[Piece][mob];
+        }
+        ENDNEW
         
         
 //        NEW if (useImprovements) {
@@ -757,58 +770,60 @@ namespace {
 //        NEW}
         
         STARTNEW
-        
-        Value value = Value(0);
-        best_capture = Value(0);
-        
-        //if (useImprovements) {
-        
-        // calculate the current pieces best capture move value
-        while (captures_bb) {
-            s_aux = pop_1st_bit(&captures_bb);
-            
-            value = pos.midgame_value_of_piece_on(s_aux) - pos.midgame_value_of_piece_on(s);
-            
-            for (int k = 1; k < explSq[s].size; ++k) {
-            	if (pos.type_of_piece_on(explSq[s].square[k]) != PAWN) {
-
-            		if (pos.color_of_piece_on(explSq[s].square[k]) == Us) {
-            			value -= pos.midgame_value_of_piece_on(explSq[s].square[k]);
-            		} else if (pos.color_of_piece_on(explSq[s].square[k]) == Them) {
-            			value += pos.midgame_value_of_piece_on(explSq[s].square[k]);
-            		}
-
-            	}
-            }
-            
-            if (best_capture < value) {
-            	best_capture = value;
-            }
-        }
-        score += make_score(best_capture / 10, best_capture / 10);
-        
-        //}
-		
-        //if (!useImprovements) {
-        	
-        // more generally: measure the value of the cluster which is affected if explosion occurs
-        // this is done similiar to pos::see
-
-        value = Value(0);
-        for (int k = 1; k < explSq[s].size; ++k) {
-        	if (pos.type_of_piece_on(explSq[s].square[k]) != PAWN) {
-
-        		if (pos.color_of_piece_on(explSq[s].square[k]) == Us) {
-        			value -= pos.midgame_value_of_piece_on(explSq[s].square[k]);
-        		} else if (pos.color_of_piece_on(explSq[s].square[k]) == Them) {
-        			value += pos.midgame_value_of_piece_on(explSq[s].square[k]);
-        		}
-
-        	}
-        }
-
-        value /= 25; // 50 ~ 37.3%, 25 ~ 38.6%, 15 ~ >30%
-        score += make_score(value, value);
+        /*
+         * this is strong but it slows down the search a lot
+         */
+//        Value value = VALUE_ZERO;
+//        best_capture = VALUE_ZERO;
+//        
+//        //if (useImprovements) {
+//        
+//        // calculate the current pieces best capture move value
+//        while (captures_bb) {
+//            s_aux = pop_1st_bit(&captures_bb);
+//            
+//            value = pos.midgame_value_of_piece_on(s_aux) - pos.midgame_value_of_piece_on(s);
+//            
+//            for (int k = 1; k < explSq[s].size; ++k) {
+//            	if (pos.type_of_piece_on(explSq[s].square[k]) != PAWN) {
+//
+//            		if (pos.color_of_piece_on(explSq[s].square[k]) == Us) {
+//            			value -= pos.midgame_value_of_piece_on(explSq[s].square[k]);
+//            		} else if (pos.color_of_piece_on(explSq[s].square[k]) == Them) {
+//            			value += pos.midgame_value_of_piece_on(explSq[s].square[k]);
+//            		}
+//
+//            	}
+//            }
+//            
+//            if (best_capture < value) {
+//            	best_capture = value;
+//            }
+//        }
+//        score += make_score(best_capture / 10, best_capture / 10);
+//        
+//        //}
+//		
+//        //if (!useImprovements) {
+//        	
+//        // more generally: measure the value of the cluster which is affected if explosion occurs
+//        // this is done similiar to pos::see
+//
+//        value = VALUE_ZERO;
+//        for (int k = 1; k < explSq[s].size; ++k) {
+//        	if (pos.type_of_piece_on(explSq[s].square[k]) != PAWN) {
+//
+//        		if (pos.color_of_piece_on(explSq[s].square[k]) == Us) {
+//        			value -= pos.midgame_value_of_piece_on(explSq[s].square[k]);
+//        		} else if (pos.color_of_piece_on(explSq[s].square[k]) == Them) {
+//        			value += pos.midgame_value_of_piece_on(explSq[s].square[k]);
+//        		}
+//
+//        	}
+//        }
+//
+//        value /= 25; // 50 ~ 37.3%, 25 ~ 38.6%, 15 ~ >30%
+//        score += make_score(value, value);
         
 //        } else {
 //		
@@ -883,18 +898,18 @@ namespace {
         	}
         	
         	
-        	// anti half open file
-        	if (relative_rank(Us, s) <= RANK_2) {
-				f = square_file(s);
-				if (!ei.pi->file_is_half_open(Us, f) && ei.pi->file_is_half_open(Them, f)) {
-					
-					score += make_score(30, 0);
-					if (ei.file_is_half_open_mp(Them, f)) {
-						score += make_score(30, 0);
-					}
-	 
-				}
-        	}
+//        	// anti half open file
+//        	if (relative_rank(Us, s) <= RANK_2) {
+//				f = square_file(s);
+//				if (!ei.pi->file_is_half_open(Us, f) && ei.pi->file_is_half_open(Them, f)) {
+//					
+//					score += make_score(30, 0);
+//					if (ei.file_is_half_open_mp(Them, f)) {
+//						score += make_score(30, 0);
+//					}
+//	 
+//				}
+//        	}
         	
         	
         }
@@ -975,13 +990,18 @@ namespace {
             // this is good since the pawn can't be removed unless we get an open file
             // so this pawn can almost be treated like passed
             else if (ei.pi->file_is_half_open(Them, f)) {
-            
-            	openfile_score += RookAntiHalfOpenFileBonus;
-            	//score += RookAntiHalfOpenFileBonus;
-            	if (ei.file_is_half_open_mp(Them, f)) {
+            	
+            	
+            	if (!(ei.pi->passed_pawns(Us) && file_bb(f))) {
+
             		openfile_score += RookAntiHalfOpenFileBonus;
             		//score += RookAntiHalfOpenFileBonus;
+            		if (ei.file_is_half_open_mp(Them, f)) {
+            			openfile_score += RookAntiHalfOpenFileBonus;
+            			//score += RookAntiHalfOpenFileBonus;
+            		}
             	}
+
             	
             }
             

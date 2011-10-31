@@ -51,7 +51,7 @@ extern void init_kpk_bitbase();
 #define TEST2
 
 int main(int argc, char* argv[]) {
-	
+	srand(time(0));
 	
 	
 	setvbuf(stderr, NULL, _IONBF, 0);
@@ -70,7 +70,6 @@ int main(int argc, char* argv[]) {
 	generate_explosionSquares();
 	generate_squaresTouch();
 	
-	srand(time(0));
 	
 #ifndef NDEBUG
 	cout << "Debug version of atomkraft, define NDEBUG to get the release version." << endl;

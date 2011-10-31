@@ -88,12 +88,12 @@ const int MgPST[][64] = {
    //  A      B       C      D      E      F      G       H
 	MK-193, MK- 67, MK-39, MK-25, MK-25, MK-39, MK- 67, MK-193,
 	MK- 53, MK- 25, MK+ 1, MK+13, MK+13, MK+ 1, MK- 25, MK- 53,
-	MK+ 20, MK+ 13, MK+41, MK+55, MK+55, MK+41, MK+ 13, MK+ 20,
-	MK+ 15, MK+ 13, MK+41, MK+55, MK+55, MK+41, MK+ 13, MK+ 15,
-	MK+ 15, MK+ 20, MK+27, MK+41, MK+41, MK+27, MK+ 20, MK+ 15,
-	MK+ 25, MK+ 45, MK+50, MK+50, MK+50, MK+50, MK+ 45, MK+ 25,
-	MK+ 30, MK+ 40, MK+45, MK+45, MK+45, MK+45, MK+ 40, MK+ 30,
-    MK+ 15, MK+ 30, MK+30, MK+30, MK+30, MK+30, MK+ 30, MK+ 10,
+	MK+ 25, MK+ 25, MK+30, MK+30, MK+30, MK+30, MK+ 25, MK+ 25,
+	MK+ 30, MK+ 30, MK+40, MK+40, MK+40, MK+40, MK+ 30, MK+ 30,
+	MK+ 15, MK+ 35, MK+45, MK+45, MK+45, MK+45, MK+ 35, MK+ 15,
+	MK+ 25, MK+ 40, MK+50, MK+50, MK+50, MK+50, MK+ 40, MK+ 25,
+	MK+ 30, MK+ 40, MK+55, MK+55, MK+55, MK+55, MK+ 40, MK+ 30,
+    MK+ 10, MK+ 30, MK+45, MK+45, MK+45, MK+45, MK+ 30, MK+ 10,
   },
 //  {// Bishop
 //   // A      B      C      D      E      F      G      H
@@ -110,12 +110,12 @@ const int MgPST[][64] = {
    //  A      B       C      D      E      F      G       H
 	MB- 40, MB- 40, MB-39, MB-25, MB-25, MB-39, MB- 40, MB- 40,
 	MB- 17, MB-  0, MB+ 1, MB+13, MB+13, MB+ 1, MB-  0, MB- 17,
-	MB+ 20, MB+ 13, MB+41, MB+55, MB+55, MB+41, MB+ 13, MB+ 20,
-	MB+ 15, MB+ 13, MB+41, MB+55, MB+55, MB+41, MB+ 13, MB+ 15,
-	MB+ 15, MB+ 20, MB+27, MB+41, MB+41, MB+27, MB+ 20, MB+ 15,
+	MB+ 20, MB+ 20, MB+30, MB+30, MB+30, MB+30, MB+ 20, MB+ 20,
+	MB+ 15, MB+ 20, MB+35, MB+35, MB+35, MB+35, MB+ 20, MB+ 15,
+	MB+ 15, MB+ 30, MB+40, MB+40, MB+40, MB+40, MB+ 30, MB+ 15,
 	MB+ 25, MB+ 45, MB+50, MB+50, MB+50, MB+50, MB+ 45, MB+ 25,
-	MB+ 30, MB+ 40, MB+45, MB+45, MB+45, MB+45, MB+ 40, MB+ 30,
-    MB+ 15, MB+ 30, MB+30, MB+30, MB+30, MB+30, MB+ 30, MB+ 10,
+	MB+ 30, MB+ 40, MB+50, MB+50, MB+50, MB+50, MB+ 40, MB+ 30,
+    MB+ 15, MB+ 30, MB+40, MB+40, MB+40, MB+40, MB+ 30, MB+ 10,
   },
   {// Rook
    // A      B     C     D     E     F     G     H

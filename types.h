@@ -275,6 +275,8 @@ inline T operator/ (const T d, int i) { return T(int(d) / i); } \
 inline T operator- (const T d) { return T(-int(d)); } \
 inline T operator++ (T& d, int) {d = T(int(d) + 1); return d; } \
 inline T operator-- (T& d, int) { d = T(int(d) - 1); return d; } \
+inline T operator++ (T& d) {d = T(int(d) + 1); return d; } \
+inline T operator-- (T& d) { d = T(int(d) - 1); return d; } \
 inline void operator+= (T& d1, const T d2) { d1 = d1 + d2; } \
 inline void operator-= (T& d1, const T d2) { d1 = d1 - d2; } \
 inline void operator*= (T& d, int i) { d = T(int(d) * i); } \
@@ -342,28 +344,30 @@ inline void operator/= (Score& d, int i) { d = Score(int(d) / i); }
 
 // NEW PIECE VALUES
 const float VALUE_SCALE = 0.75f;
-const Value PawnValueMidgame   = Value(int(200  * VALUE_SCALE));
-const Value PawnValueEndgame   = Value(int(300  * VALUE_SCALE));
-const Value KnightValueMidgame = Value(int(300  * VALUE_SCALE));
-const Value KnightValueEndgame = Value(int(350  * VALUE_SCALE));
-const Value BishopValueMidgame = Value(int(300  * VALUE_SCALE));
-const Value BishopValueEndgame = Value(int(320  * VALUE_SCALE));
-const Value RookValueMidgame   = Value(int(600  * VALUE_SCALE));
-const Value RookValueEndgame   = Value(int(800  * VALUE_SCALE));
-const Value QueenValueMidgame  = Value(int(1300 * VALUE_SCALE));
-const Value QueenValueEndgame  = Value(int(1600 * VALUE_SCALE));
+//const Value PawnValueMidgame   = Value(int(200  * VALUE_SCALE));
+//const Value PawnValueEndgame   = Value(int(300  * VALUE_SCALE));
+//const Value KnightValueMidgame = Value(int(300  * VALUE_SCALE));
+//const Value KnightValueEndgame = Value(int(350  * VALUE_SCALE));
+//const Value BishopValueMidgame = Value(int(300  * VALUE_SCALE));
+//const Value BishopValueEndgame = Value(int(320  * VALUE_SCALE));
+//const Value RookValueMidgame   = Value(int(600  * VALUE_SCALE));
+//const Value RookValueEndgame   = Value(int(800  * VALUE_SCALE));
+//const Value QueenValueMidgame  = Value(int(1300 * VALUE_SCALE));
+//const Value QueenValueEndgame  = Value(int(1600 * VALUE_SCALE));
 
-//const float VALUE_SCALE = 0.75f;
-//extern Value PawnValueMidgame;
-//extern Value PawnValueEndgame;
-//extern Value KnightValueMidgame;
-//extern Value KnightValueEndgame;
-//extern Value BishopValueMidgame;
-//extern Value BishopValueEndgame;
-//extern Value RookValueMidgame;
-//extern Value RookValueEndgame;
-//extern Value QueenValueMidgame;
-//extern Value QueenValueEndgame;
+//const Value MinorPiecePawnValueDiff = KnightValueMidgame - PawnValueMidgame;
+
+extern Value PawnValueMidgame;
+extern Value PawnValueEndgame;
+extern Value KnightValueMidgame;
+extern Value KnightValueEndgame;
+extern Value BishopValueMidgame;
+extern Value BishopValueEndgame;
+extern Value RookValueMidgame;
+extern Value RookValueEndgame;
+extern Value QueenValueMidgame;
+extern Value QueenValueEndgame;
+
 
 
 inline Value value_mate_in(int ply) {

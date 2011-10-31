@@ -407,7 +407,9 @@ bool think(Position& pos, const SearchLimits& limits, Move searchMoves[], Move& 
               wait_for_stop_or_ponderhit();
           
           NEW NEW_bestMove = bookMove;
+#if !defined TEST_VERSION
           cout << "bestmove " << bookMove << endl;
+#endif
           return !QuitRequest;
       }
   }
@@ -463,7 +465,7 @@ bool think(Position& pos, const SearchLimits& limits, Move searchMoves[], Move& 
   NEW NEW_bestMove = bestMove; 
   NEW NEW_ponderMove = ponderMove;
 
-#if !defined BOOK_VERSION
+#if !defined BOOK_VERSION && !defined TEST_VERSION
   cout << "info" << speed_to_uci(pos.nodes_searched()) << endl;
 #endif
   
@@ -493,7 +495,7 @@ bool think(Position& pos, const SearchLimits& limits, Move searchMoves[], Move& 
   if (!StopRequest && (Limits.ponder || Limits.infinite))
       wait_for_stop_or_ponderhit();
   //NEW cout << "test3" << endl;
-#ifndef BOOK_VERSION
+#if !defined BOOK_VERSION && !defined TEST_VERSION
   // Could be MOVE_NONE when searching on a stalemate position
   cout << "bestmove " << bestMove;
 
@@ -540,7 +542,7 @@ namespace {
     // Moves to search are verified and copied
     Rml.init(pos, searchMoves);
 
-#if !defined FICS_VERSION && !defined BOOK_VERSION
+#if !defined FICS_VERSION && !defined BOOK_VERSION && !defined TEST_VERSION
     // Handle special case of searching on a mate/stalemate position
     if (Rml.size() == 0)
     {
@@ -633,7 +635,7 @@ namespace {
                 selDepth = Threads[i].maxPly;
 
         // Send PV line to GUI and to log file
-#if !defined FICS_VERSION && !defined BOOK_VERSION
+#if !defined FICS_VERSION && !defined BOOK_VERSION && !defined TEST_VERSION
         for (int i = 0; i < Min(UCIMultiPV, (int)Rml.size()); i++) {
             cout << Rml[i].pv_info_to_uci(pos, depth, selDepth, alpha, beta, i) << endl;
         }   
@@ -755,22 +757,6 @@ namespace {
     NEW bool expl_threat = false;
     
     STARTNEW
-//	MoveStack mlist[MAX_MOVES];
-//	MoveStack* last = generate<MV_LEGAL>(pos, mlist);
-//	
-//	if (mlist == last || pos.piece_count(pos.side_to_move(), KING) == 0) {
-//		if (mlist == last) cout << "normal mate" << endl;
-//		if (pos.piece_count(pos.side_to_move(), KING) == 0) cout << "explosion" << endl;
-//		char str[10];
-//		
-//		cin >> str;
-//		
-//		if (str[0] == 'd') {
-//			print_debuginfo(pos);
-//		} else if (str[0] == 'q') {
-//			exit(0);
-//		}
-//	}
     
     // no king => mate
     if (pos.piece_count(pos.side_to_move(), KING) == 0) {
@@ -807,8 +793,8 @@ namespace {
 
     // Step 2. Check for aborted search and immediate draw
     if ((   StopRequest
-         || Threads[threadID].cutoff_occurred()
-         || pos.is_draw()
+         //|| Threads[threadID].cutoff_occurred()
+         || pos.is_draw<false>()
          || ss->ply > PLY_MAX) && !Root)
         return VALUE_DRAW;
 
@@ -853,19 +839,7 @@ namespace {
     }
     else
     {
-    	//NEW assert(pos.piece_count(pos.side_to_move(), KING));
     	refinedValue = ss->eval = evaluate(pos, ss->evalMargin, &expl_threat);
-    	
-//        OLD refinedValue = ss->eval = evaluate(pos, ss->evalMargin);
-//        STARTNEW
-//        if (pos.piece_count(pos.side_to_move(), KING)) {
-//        	assert(pos.is_ok());
-//        	refinedValue = ss->eval = evaluate(pos, ss->evalMargin);
-//        } else {
-//        	refinedValue = ss->eval = -VALUE_INFINITE;
-//        }
-//        ENDNEW
-        
         TT.store(posKey, VALUE_NONE, VALUE_TYPE_NONE, DEPTH_NONE, MOVE_NONE, ss->eval, ss->evalMargin);
     }
 
@@ -1222,11 +1196,6 @@ split_point_start: // At split points actual search starts from here
       
       
       STARTNEW
-      if (ss[-2].currentMove == make_move(SQ_H6, SQ_E3)) {
-    	  if (ss[-1].currentMove == make_move(SQ_E1, SQ_E2)) {
-    		  
-    	  }
-      }
       
       if (Root) {
     	  
@@ -1238,42 +1207,6 @@ split_point_start: // At split points actual search starts from here
     	  //cout << "    " << move_to_string(ms.move) << " " << ms.score << " " << book_moves_aux.size() << endl;
 #endif
     	  
-    	  
-    	  //cout << ((newDepth - ss->reduction < ONE_PLY) ? "qsearch" : "search") << endl;
-//    	  if (value >= VALUE_MATE_IN_PLY_MAX) {
-//    		  cout << "    ";
-//    		  cout << move_to_uci(move, 0) << " ";
-//    		  int k = 1;
-//    		  while (ss[k].bestMove != MOVE_NONE && k < 20) {
-//    			  cout << move_to_uci(ss[k].bestMove, 0) << " ";
-//    			  ++k;
-//    		  }
-//    		  cout << endl;
-//    		  
-//    		  cout << "         ";
-//    		  k = 1;
-//    		  while (ss[k].currentMove != MOVE_NONE && k < 20) {
-//    			  cout << move_to_uci(ss[k].currentMove, 0) << " ";
-//    			  ++k;
-//    		  }
-//    		  cout << endl;
-//    		  
-//    		  cout << "         ";
-//    		  k = 1;
-//    		  while (ss[k].excludedMove != MOVE_NONE && k < 20) {
-//    			  cout << move_to_uci(ss[k].excludedMove, 0) << " ";
-//    			  ++k;
-//    		  }
-//    		  cout << endl;
-//    		  
-//    		  cout << "         ";
-//    		  k = 1;
-//    		  while (ss[k].mateKiller != MOVE_NONE && k < 20) {
-//    			  cout << move_to_uci(ss[k].mateKiller, 0) << " ";
-//    			  ++k;
-//    		  }
-//    		  cout << endl;
-//    	  }
       }
       ENDNEW
       
@@ -1476,7 +1409,7 @@ split_point_start: // At split points actual search starts from here
     ENDNEW
 
     // Check for an instant draw or maximum ply reached
-    if (ss->ply > PLY_MAX || pos.is_draw())
+    if (ss->ply > PLY_MAX || pos.is_draw<true>())
         return VALUE_DRAW;
 
     // Decide whether or not to include checks, this fixes also the type of
@@ -1516,24 +1449,7 @@ split_point_start: // At split points actual search starts from here
             ss->eval = bestValue = tte->static_value();
         }
         else {
-        	//NEW assert(pos.piece_count(pos.side_to_move(), KING));
         	ss->eval = bestValue = evaluate(pos, evalMargin, &expl_threat);
-           
-//        	OLD ss->eval = bestValue = evaluate(pos, evalMargin);
-//            STARTNEW
-//            if (pos.piece_count(pos.side_to_move(), KING)) {
-//            	bool pos_ok = pos.is_ok();
-//            	if (!pos_ok) {
-//            		cout << move_to_uci(ss[-3].currentMove, 0) << endl;
-//            		cout << move_to_uci(ss[-2].currentMove, 0) << endl;
-//            		cout << move_to_uci(ss[-1].currentMove, 0) << endl;
-//            	}
-//            	assert(pos_ok);
-//            	ss->eval = bestValue = evaluate(pos, evalMargin);
-//            } else {
-//            	ss->eval = bestValue = -VALUE_INFINITE;
-//            }
-//            ENDNEW
         }
 
         update_gains(pos, (ss-1)->currentMove, (ss-1)->eval, ss->eval);
@@ -2293,7 +2209,7 @@ split_point_start: // At split points actual search starts from here
            && tte->move() != MOVE_NONE
            && pos.move_is_legal(tte->move())
            && ply < PLY_MAX
-           && (!pos.is_draw() || ply < 2))
+           && (!pos.is_draw<false>() || ply < 2))
     {
         pv[ply] = tte->move();
         pos.do_move(pv[ply++], *st++);

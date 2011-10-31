@@ -22,6 +22,8 @@
 
 #include "types.h"
 
+extern int matDifFactor;
+
 class Position;
 
 extern Value evaluate(const Position& pos, Value& margin, bool* expl_threat);
